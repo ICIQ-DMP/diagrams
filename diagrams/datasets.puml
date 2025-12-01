@@ -1,0 +1,107 @@
+@startuml
+' ── Layout & style ────────────────────────────────────────────────────────────
+'top to bottom direction
+skinparam componentStyle rectangle
+'skinparam linetype ortho
+'skinparam nodesep 60
+'skinparam ranksep 50
+'skinparam wrapWidth 220
+
+' ── Platforms / Clients / DB stereotypes (visual only) ───────────────────────
+' <<platform>> main systems; <<client>> consumers/harvesters; <<database>> storage
+
+' ── LAYERS ───────────────────────────────────────────────────────────────────
+package "Layer 1 · Sources" {
+  together {
+    component "A3" as A3 <<platform>>
+    component "A3 Exporter" as A3X <<client>>
+    component "Sonia Loader" as SoniaC <<client>>
+
+    component "ioChemBD" as IOC <<platform>>
+    component "CORA.RDR" as CORA <<platform>>
+  }
+}
+
+package "Layer 2 · iMarina" {
+  component "iMarina" as IM <<platform>>
+  database  "iMarina DB" as IMDB <<database>>
+
+  ' iMarina APIs (provided)
+  interface "iMarina Researcher Ingest API" as I_IM_INGEST
+  interface "iMarina Researchers Feed API"  as I_IM_FEED
+  interface "iMarina CERIF Datasets API"    as I_IM_CERIF
+}
+
+package "Layer 3 · PRC" {
+  component "PRC" as PRC <<platform>>
+  database  "PRC DB" as PRCDB <<database>>
+
+  ' PRC internal ingest APIs (provided) – to show non-arrow relations
+  interface "PRC Researchers Ingest" as I_PRC_R
+  interface "PRC Datasets Ingest"   as I_PRC_D
+}
+
+' External dataset APIs (provided by sources)
+interface "ioChemBD Datasets API"  as I_IOC_DATA
+interface "CORA.RDR Datasets API"  as I_CORA_DATA
+
+' ── Provided APIs (lollipops) ────────────────────────────────────────────────
+IM   - I_IM_INGEST
+IM   - I_IM_FEED
+IM   - I_IM_CERIF
+
+IOC  - I_IOC_DATA
+CORA - I_CORA_DATA
+
+PRC  - I_PRC_R
+PRC  - I_PRC_D
+
+' ── Required APIs (sockets) – consumers/harvesters ───────────────────────────
+I_IM_INGEST )- A3X
+I_IM_INGEST )- SoniaC
+
+IM )- I_IOC_DATA
+note on link
+  iMarina harvests ioChemBD datasets into its DB.
+end note
+
+I_IM_FEED )- PRC
+note on link
+  PRC pulls researchers from iMarina feed
+  Periodic pull (~ bimonthly; confirm exact schedule).
+end note
+
+' PRC pulls datasets from CORA.RDR'
+I_CORA_DATA )- PRC
+note on link
+  Load only if:
+  1) Dataset includes author's ORCID, and
+  2) That ORCID already exists in iMarina (researcher preloaded).
+end note
+
+' PRC internal ingest modeled without arrows (via provided interfaces)
+' Researchers written into PRC
+I_PRC_R )- PRC
+' Datasets written into PRC
+I_PRC_D )- PRC
+
+' ── Notes / constraints ──────────────────────────────────────────────────────
+note right of I_IM_CERIF
+  Not supported by PRC currently (no CERIF dataset ingest).
+end note
+
+note right of PRC
+  PRC keeps only the last dataset load.
+  Not a repository (non-accumulative).
+end note
+
+note bottom of IMDB
+  ORCID presence in iMarina gates PRC ingestion
+  of CORA.RDR datasets.
+end note
+
+note bottom of IOC
+  Prefer linking dataset to publication at creation
+  to avoid manual matching in iMarina.
+end note
+@enduml

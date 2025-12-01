@@ -1,0 +1,35 @@
+name: Render PlantUML & Release
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - "diagrams/**/*.puml"
+      - "includes/**/*.puml"
+      - "Makefile"
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install PlantUML & deps
+        run: sudo apt-get install -y plantuml graphviz make zip
+
+      - name: Render diagrams using make
+        run: make
+
+      - name: Package diagrams into ZIP
+        run: |
+          mkdir -p release
+          zip -r release/rendered-diagrams.zip build/
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release/rendered-diagrams.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
