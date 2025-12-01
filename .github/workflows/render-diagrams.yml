@@ -5,7 +5,9 @@ on:
     branches: [ "master" ]
     paths:
       - "diagrams/**/*.puml"
+      - "diagrams/*.puml"
       - "includes/**/*.puml"
+      - "includes/*.puml"
       - "Makefile"
 
 jobs:
