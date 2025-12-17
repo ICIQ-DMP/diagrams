@@ -26,10 +26,21 @@ jobs:
 
       - name: Create tag
         run: |
-          TAG="v$(date +'%Y%m%d-%H%M%S')"
-          echo "TAG=$TAG" >> $GITHUB_ENV
-          git tag $TAG
-          git push origin $TAG
+          git fetch --tags
+
+          # Get latest tag, default to v0 if none exists
+          LATEST_TAG=$(git tag --list 'v*' --sort=-v:refname | head -n 1)
+
+          if [ -z "$LATEST_TAG" ]; then
+            NEXT_TAG="v0"
+          else
+            NUMBER=${LATEST_TAG#v}
+            NEXT_TAG="v$((NUMBER + 1))"
+          fi
+
+          echo "TAG=$NEXT_TAG" >> $GITHUB_ENV
+          git tag "$NEXT_TAG"
+          git push origin "$NEXT_TAG"
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2

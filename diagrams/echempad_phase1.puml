@@ -1,5 +1,5 @@
 @startuml
-title eChemPad – Component Diagram
+title eChemPad – Component Diagram phase 1
 
 skinparam componentStyle rectangle
 skinparam shadowing false
@@ -10,10 +10,9 @@ skinparam maxMessageSize 200
 ' External Systems
 ' -----------------------------------------------------------
 package "External Components" {
-    [Dataverse CORA.RDR\n(dataverse.csuc.cat)] as Dataverse
-    [Perkin-Elmer Signals Notebook\n(signals.iciq.es)] as Signals
-    [ICIQ LDAP\n(ldap.iciq.es)] as LDAP
-    [Instruments\n(ldap.iciq.es)] as ins
+    [Dataverse CORA.RDR\n(dataverse.csuc.cat)] <<external>> as Dataverse
+    [Perkin-Elmer Signals Notebook\n(signals.iciq.es)] <<external>> as Signals
+    [ICIQ LDAP\n(ldap.iciq.es)] <<external>> as LDAP
 }
 
 ' -----------------------------------------------------------
@@ -33,7 +32,6 @@ package "eChemPad Backend" {
     package "Core Services" {
         [Uploader Service\n- Upload via HTTP or MinIO reference] as Uploader
         [Downloader Service\n- Downloads/updates from Signals] as Downloader
-        [Metadata Service\n- Validates metadata\n- Applies metadata standards] as Metadata
         [DB Service\n- Creates/updates files, journals,\n  experiments using PG + MinIO] as DBService
     }
 
@@ -44,7 +42,6 @@ package "eChemPad Backend" {
 ' Frontend Layer
 ' -----------------------------------------------------------
 package "Frontend" {
-    [Front-End App\n(React)] as FEApp
     [Front-End Form\n(Microsoft Forms)] as FEForm
 }
 
@@ -53,7 +50,6 @@ package "Frontend" {
 ' -----------------------------------------------------------
 
 ' Frontends → Gateway
-FEApp --> Gateway : API requests
 FEForm --> Gateway : Upload journal to Dataverse
 
 ' Gateway → Core Services
@@ -79,12 +75,7 @@ Downloader --> DBService : save downloaded notebooks
 Uploader --> Dataverse : upload dataset (optional)
 DBService --> Uploader : store notebooks
 
-' Instruments → Signals
-ins --> Signals : instrument data
 
-' Metadata
-Metadata --> DBService : update metadata
-DBService --> Metadata: read metadata
 
 @enduml
 
