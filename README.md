@@ -10,3 +10,9 @@ include functionality in one of the microservices to validate the extraction fro
 include a microservice / functionality that orquestrates the movement of data throughout the services. 
 
 
+To avoid direct pushes into master (local config) you can use:
+```shell
+git config branch.master.pushRemote no_push
+```
+
+
